@@ -122,6 +122,11 @@ int32_t hci_uart_init(void)
 	uart_irq_rx_enable(uart_dev);
 	uart_irq_callback_user_data_set(uart_dev, hci_uart_callback, NULL);
 
+#if CONFIG_ALIF_BLE_ALLOW_SLEEP_RUNTIME
+	/* Establish the resting state: BRK held at 1 so ES0 is allowed to sleep. */
+	uart_line_ctrl_set(uart_dev, UART_LINE_CTRL_BRK, 1);
+#endif
+
 	/* We cannot initialize RX transfer callback here
 	 * as that might be kept in retention and also when
 	 * read operation is started a (new) callback is always set.
