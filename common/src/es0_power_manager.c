@@ -48,6 +48,7 @@ static volatile uint8_t es0_user_counter;
 #define BOOT_PARAM_ID_ACTCLK_DRIFT              0x09
 #define BOOT_PARAM_ID_CONFIGURATION             0xD1
 #define BOOT_PARAM_ID_CONFIGURATION2            0xD2
+#define BOOT_PARAM_ID_UART_SLEEP_CONFIG         0xD3
 
 #define BOOT_PARAM_LEN_LE_CODED_PHY_500          1
 #define BOOT_PARAM_LEN_DFT_SLAVE_MD              1
@@ -69,6 +70,7 @@ static volatile uint8_t es0_user_counter;
 #define BOOT_PARAM_LEN_ACTCLK_DRIFT              1
 #define BOOT_PARAM_LEN_CONFIGURATION             4
 #define BOOT_PARAM_LEN_CONFIGURATION2            4
+#define BOOT_PARAM_LEN_UART_SLEEP_CONFIG         4
 
 #define CONFIGURATION_RF_TYPE_HPA		 1
 #define CONFIGURATION_SOC_TYPE_CSP		 2
@@ -158,6 +160,16 @@ static uint16_t add_nvds_param_length(uint16_t added_len){
 
 }
 
+__weak uint16_t add_extra_nvds_param_length(void)
+{
+	return 0;
+}
+
+__weak uint8_t *add_extra_nvds_params(uint8_t *target)
+{
+	return target;
+}
+
 void es0_enable_hpa_mode(bool enabled)
 {
 	es0_start_params.hpa_enabled = enabled;
@@ -238,6 +250,10 @@ int8_t take_es0_into_use(void)
 	total_length += add_nvds_param_length(BOOT_PARAM_LEN_ACTCLK_DRIFT);
 	total_length += add_nvds_param_length(BOOT_PARAM_LEN_CONFIGURATION);
 	total_length += add_nvds_param_length(BOOT_PARAM_LEN_CONFIGURATION2);
+	total_length += add_nvds_param_length(BOOT_PARAM_LEN_UART_SLEEP_CONFIG);
+	/* Reserve space for application-provided extra params */
+	total_length += add_extra_nvds_param_length();
+
 
 	if (total_length > LL_BOOT_PARAMS_MAX_SIZE) {
 		return ES0_PM_ERROR_TOO_MANY_BOOT_PARAMS;
@@ -308,13 +324,13 @@ int8_t take_es0_into_use(void)
 	ptr = write_tlv_int(ptr, BOOT_PARAM_ID_ACTCLK_DRIFT, CONFIG_ALIF_MAX_ACTIVE_CLOCK_DRIFT,
 			    BOOT_PARAM_LEN_ACTCLK_DRIFT);
 
-
 	ptr = write_tlv_int(ptr, BOOT_PARAM_ID_CONFIGURATION, config,
 			    BOOT_PARAM_LEN_CONFIGURATION);
 
 	ptr = write_tlv_int(ptr, BOOT_PARAM_ID_CONFIGURATION2, edge_config,
 			    BOOT_PARAM_LEN_CONFIGURATION2);
-
+	ptr = write_tlv_int(ptr, BOOT_PARAM_ID_UART_SLEEP_CONFIG, true,
+			    BOOT_PARAM_LEN_UART_SLEEP_CONFIG);
 
 	uint32_t min_uart_clk_freq = used_baudrate * 16;
 	uint32_t reg_uart_clk_cfg = LL_UART_CLK_SEL_CTRL_16MHZ;
@@ -335,6 +351,9 @@ int8_t take_es0_into_use(void)
 	es0_clock_select |= reg_uart_clk_cfg;
 	ptr = write_tlv_int(ptr, BOOT_PARAM_ID_UART_INPUT_CLK_FREQ, ll_uart_clk_freq,
 			    BOOT_PARAM_LEN_UART_INPUT_CLK_FREQ);
+
+	/* Append application-provided extra params; must match add_extra_nvds_param_length() */
+	ptr = add_extra_nvds_params(ptr);
 
 	if (total_length < (LL_BOOT_PARAMS_MAX_SIZE - 2)) {
 		ptr = write_tlv_int(ptr, BOOT_PARAM_ID_NO_PARAM, 0, 0);
