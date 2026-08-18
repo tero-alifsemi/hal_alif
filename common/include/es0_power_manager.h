@@ -76,4 +76,28 @@ int8_t stop_using_es0(void);
  */
 void wake_es0(const struct device *uart_dev);
 
+/**
+ * @brief Hook to reserve extra NVDS boot-parameter space.
+ *
+ * Weak default returns 0. Override hook to account for the
+ * total byte length of any extra TLV parameters written by
+ * add_extra_nvds_params(). The reserved length must match the number of
+ * bytes that hook actually writes.
+ *
+ * @return Number of extra bytes to reserve in the NVDS boot buffer.
+ */
+uint16_t add_extra_nvds_param_length(void);
+
+/**
+ * @brief Hook to write extra NVDS boot parameters.
+ *
+ * Weak default writes nothing. Override hook to append extra
+ * TLV parameters to the boot buffer. The number of bytes written must equal
+ * the value returned by add_extra_nvds_param_length().
+ *
+ * @param target Current write position in the NVDS boot buffer.
+ * @return Updated write position after the extra parameters.
+ */
+uint8_t *add_extra_nvds_params(uint8_t *target);
+
 #endif /* __ES0_POWER_MANAGER_H__ */
