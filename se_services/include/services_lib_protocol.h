@@ -923,6 +923,13 @@ typedef struct {
 	uint32_t resp_error_code;
 } set_aclk_svc_t;
 
+/* VBAT clock fast/slow mode selection */
+typedef struct {
+	service_header_t header;
+	uint32_t send_vbat_fast_clk_en;
+	uint32_t resp_error_code;
+} set_vbat_clk_svc_t;
+
 /* Low Power Comparator Configuration */
 typedef struct {
 	service_header_t header;

@@ -322,6 +322,7 @@ typedef union {
 	power_setting_svc_t power_setting_svc_d;
 	lp_cmp_configure_svc_t lp_cmp_configure_svc_d;
 	clock_setting_svc_t clock_setting_svc_d;
+	set_vbat_clk_svc_t set_vbat_clk_svc_d;
 } se_service_all_svc_t;
 
 /*
@@ -1756,6 +1757,43 @@ int se_service_clock_setting_get(clock_setting_t setting, uint32_t *freq)
 
 	*freq = se_service_all_svc_d.clock_setting_svc_d.value;
 	k_mutex_unlock(&svc_mutex);
+
+	return 0;
+}
+
+int se_service_clock_set_vbat_clk(bool fast_clk_en)
+{
+	int err, resp_err = -1;
+
+	err = se_service_ensure_ready();
+	if (err) {
+		return err;
+	}
+
+	err = k_mutex_lock(&svc_mutex, K_MSEC(MUTEX_TIMEOUT));
+	if (err) {
+		LOG_ERR("Unable to lock mutex (error = %d)\n", err);
+		return err;
+	}
+
+	memset(&se_service_all_svc_d, 0, sizeof(se_service_all_svc_d));
+	se_service_all_svc_d.set_vbat_clk_svc_d.header.hdr_service_id =
+		SERVICE_CLOCK_SET_VBAT_CLK_REQ_ID;
+	se_service_all_svc_d.set_vbat_clk_svc_d.send_vbat_fast_clk_en = fast_clk_en ? 1 : 0;
+
+	err = send_msg_to_se((uint32_t *)&se_service_all_svc_d.set_vbat_clk_svc_d,
+			     sizeof(se_service_all_svc_d.set_vbat_clk_svc_d), SERVICE_TIMEOUT);
+	resp_err = se_service_all_svc_d.set_vbat_clk_svc_d.resp_error_code;
+	k_mutex_unlock(&svc_mutex);
+
+	if (err) {
+		LOG_ERR("%s failed with %d\n", __func__, err);
+		return err;
+	}
+	if (resp_err) {
+		LOG_ERR("%s: received response error = %d\n", __func__, resp_err);
+		return resp_err;
+	}
 
 	return 0;
 }

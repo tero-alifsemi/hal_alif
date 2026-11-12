@@ -803,6 +803,10 @@ uint32_t SERVICES_clocks_setting_get(uint32_t services_handle,
 				     uint32_t *value,
 				     uint32_t *error_code);
 
+uint32_t SERVICES_clocks_set_vbat_clk(uint32_t services_handle,
+				      uint32_t *vbat_fast_clk_en,
+				      uint32_t *error_code);
+
 uint32_t SERVICES_pll_initialize(uint32_t services_handle,
 				 uint32_t *error_code);
 uint32_t SERVICES_pll_deinit(uint32_t services_handle,

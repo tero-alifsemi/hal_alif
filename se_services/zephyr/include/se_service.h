@@ -342,6 +342,21 @@ int se_service_clock_set_divider(clock_divider_t divider, uint32_t value);
 int se_service_clock_setting_get(clock_setting_t setting, uint32_t *freq);
 
 /**
+ * @brief Send service request to SE to select fast or slow VBAT clock.
+ *
+ * Slow mode uses the 32 kHz clock for all VBAT domain access. Fast mode uses
+ * the 10 MHz clock, but RTC access is restricted while it is selected, so
+ * switch back to slow mode before using the RTC.
+ *
+ * @param fast_clk_en true to select the 10 MHz clock, false for 32 kHz.
+ * @retval 0 Success.
+ * @retval -EAGAIN Operation timed out. Retry after a delay.
+ * @retval -EBUSY SE is busy. Retry after a delay.
+ * @return Positive error code returned by SE for a failed service request.
+ */
+int se_service_clock_set_vbat_clk(bool fast_clk_en);
+
+/**
  * @brief Send service request to SE to process TOC entry.
  *
  * @param image_id ID that matches the TOC entry field image identifier.
