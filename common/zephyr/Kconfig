@@ -42,6 +42,32 @@ config ALIF_PM_SLEEP_ENABLE
 	int "Enable sleep mode"
 	default 1
 
+choice ALIF_BLE_SLEEP_MODE_CHOICE
+	prompt "ES0 UART sleep mode"
+	default ALIF_BLE_SLEEP_DISABLED
+	help
+	  Selects how ES0 sleep is coordinated over the HCI/AHI UART.
+
+config ALIF_BLE_SLEEP_DISABLED
+	bool "Sleep disabled"
+	help
+	  UART sleep configuration is not passed to ES0. The UART driver sets
+	  a break condition on suspend and clears it on resume.
+
+config ALIF_BLE_SLEEP_ENABLED
+	bool "Sleep enabled"
+	help
+	  ES0 and the host core sleep independently. UART sleep configuration
+	  is passed to ES0 and the UART driver does not touch the break
+	  condition on suspend or resume.
+
+endchoice
+
+config ALIF_BLE_SLEEP_MODE
+	int
+	default 3 if ALIF_BLE_SLEEP_ENABLED
+	default 0
+
 config ALIF_PM_EXT_WAKEUP_ENABLE
 	int "Enable External Wakeup"
 	default 1
